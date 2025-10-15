@@ -7,25 +7,25 @@ public class Server {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Waiting for client connection...");
 
-            Socket socket = serverSocket.accept();
-            System.out.println("Accepted connection");
+            try (Socket socket = serverSocket.accept()) {
+                System.out.println("Accepted connection");
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
-            String clientMessage;
-            while ((clientMessage = in.readLine()) != null) {
-                System.out.println("Client said: " + clientMessage);
-                if (clientMessage.equalsIgnoreCase("stop")){
-                    out.println("Connection stopped");
-                    break;
+                String clientMessage;
+                while ((clientMessage = in.readLine()) != null) {
+                    System.out.println("Client said: " + clientMessage);
+                    if (clientMessage.equalsIgnoreCase("stop")){
+                        out.println("Connection stopped");
+                        break;
+                    }
+                    out.println(clientMessage);
                 }
-                out.println(clientMessage);
+                System.out.println("Connection closed");
             }
-            socket.close();
-            System.out.println("Connection closed");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("IOException: " + e.getMessage());
         }
     }
 }

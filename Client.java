@@ -11,25 +11,26 @@ public class Client {
             System.out.println("Connected to server on port " + serverport);
 
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            Scanner scanner = new Scanner(System.in);
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true); 
 
-            String userInput;
-            while (true) {
-                System.out.print("You: ");
-                userInput = scanner.nextLine();
-                out.println(userInput);
+            try (Scanner scanner = new Scanner(System.in)) {
+                String userInput;
+                while (true) {
+                    System.out.print("You: ");
+                    userInput = scanner.nextLine();
+                    out.println(userInput);
 
-                if (userInput.equalsIgnoreCase("stop")) {
-                    break;
+                    if (userInput.equalsIgnoreCase("stop")) {
+                        break;
+                    }
+
+                    String response = in.readLine();
+                    System.out.println("Server Response: " + response);
                 }
-
-                String response = in.readLine();
-                System.out.println("Server Response: " + response);
+                System.out.println("Goodbye!");
             }
-            System.out.println("Goodbye!");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("An error occurred: " + e.getMessage());
         }
     }
 }
