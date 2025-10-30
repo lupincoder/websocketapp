@@ -4,33 +4,53 @@ import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args) {
-        String serverip = "127.0.0.1";
-        int serverport = 5000;
+        String serverIp = "127.0.0.1";
+        int serverPort = 5000;
 
-        try (Socket socket = new Socket(serverip, serverport)) {
-            System.out.println("Connected to server on port " + serverport);
+        try (Socket socket = new Socket(serverIp, serverPort)) {
+            System.out.println("Connected to server at " + serverIp + ":" + serverPort);
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true); 
+            // Output thread (sending messages)
+            Thread sendThread = new Thread(() -> {
+                try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                     Scanner scanner = new Scanner(System.in)) {
 
-            try (Scanner scanner = new Scanner(System.in)) {
-                String userInput;
-                while (true) {
-                    System.out.print("You: ");
-                    userInput = scanner.nextLine();
-                    out.println(userInput);
+                    while (true) {
+                        System.out.print("You: ");
+                        String message = scanner.nextLine();
+                        out.println(message);
 
-                    if (userInput.equalsIgnoreCase("stop")) {
-                        break;
+                        if (message.equalsIgnoreCase("stop")) {
+                            break;
+                        }
                     }
-
-                    String response = in.readLine();
-                    System.out.println("Server Response: " + response);
+                } catch (IOException e) {
+                    System.err.println("Error sending: " + e.getMessage());
                 }
-                System.out.println("Goodbye!");
-            }
-        } catch (IOException e) {
-            System.err.println("An error occurred: " + e.getMessage());
+            });
+
+            // Input thread (receiving messages)
+            Thread receiveThread = new Thread(() -> {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+                    String response;
+                    while ((response = in.readLine()) != null) {
+                        System.out.println("\nServer: " + response);
+                        System.out.print("You: ");
+                    }
+                } catch (IOException e) {
+                    System.out.println("Connection closed.");
+                }
+            });
+
+            sendThread.start();
+            receiveThread.start();
+
+            sendThread.join();
+            socket.close();
+            System.out.println("Disconnected from server.");
+
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Client error: " + e.getMessage());
         }
     }
 }
